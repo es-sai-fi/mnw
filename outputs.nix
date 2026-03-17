@@ -6,6 +6,12 @@ self:
     npinsToPluginsAttrs =
       pkgs: path: ((pkgs.callPackage ./npinsToPlugins.nix { }) builtins.mapAttrs) path;
     npinsToPlugins = self.lib.npinsToPluginsList;
+    
+    lonToPluginsList =
+      pkgs: path: ((pkgs.callPackage ./lonToPlugins.nix { }) pkgs.lib.mapAttrsToList) path;
+    lonToPluginsAttrs =
+      pkgs: path: ((pkgs.callPackage ./lonToPlugins.nix { }) builtins.mapAttrs) path;
+    lonToPlugins = self.lib.lonToPluginsList;
 
     uncheckedWrap = pkgs: pkgs.callPackage ./wrapper.nix { };
     wrap =
