@@ -21,6 +21,7 @@ lib.makeOverridable (
     initViml,
     initLua,
     appName,
+    appNameMethod,
     desktopEntry,
     providers,
     dev ? false,
@@ -30,14 +31,12 @@ lib.makeOverridable (
   }@mnwWrapperArgs:
   let
 
-    toStringIfNeeded = x: if !lib.isStorePath x then "${x}" else toString x;
-
     pluginsToListOfStrings = lib.mapAttrsToList (
       n: v:
       if lib.isStringLike v then
-        toStringIfNeeded v
+        "${v}"
       else if v ? src && lib.isStringLike v.src then
-        toStringIfNeeded v.src
+        "${v.src}"
       else
         throw "mnw: plugin '${n}' cannot be coerced to string, ensure it has a 'outPath' or 'src'"
     );
@@ -78,10 +77,10 @@ lib.makeOverridable (
         luaEnv = neovim.lua.withPackages extraLuaPackages;
         inherit (neovim.lua.pkgs) luaLib;
 
-        sourceLua = lib.concatMapStringsSep "\n" (x: "dofile('${toStringIfNeeded x}')") (
+        sourceLua = lib.concatMapStringsSep "\n" (x: "dofile('${x}')") (
           (lib.optional (initLua != "") (writeText "init.lua" initLua)) ++ luaFiles
         );
-        sourceVimL = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${toStringIfNeeded x}')") (
+        sourceVimL = lib.concatMapStringsSep "\n" (x: "vim.cmd('source ${x}')") (
           (lib.optional (initViml != "") (writeText "init.vim" initViml)) ++ vimlFiles
         );
       in
@@ -255,13 +254,15 @@ lib.makeOverridable (
           + "\""
         )
         "--set"
-        "NVIM_APPNAME"
-        appName
-
-        "--set"
         "VIMINIT"
         "source ${configDir}/init.lua"
       ]
+      ++ (lib.optionals (appName != null) [
+        "--${appNameMethod}"
+        "NVIM_APPNAME"
+        appName
+      ])
+
       ++ wrapperArgs
     );
 
